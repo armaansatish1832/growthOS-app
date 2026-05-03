@@ -29,6 +29,9 @@ export default function ChatBot() {
     const trimmed = input.trim();
     if (!trimmed || isTyping) return;
 
+    setInput("");
+    setIsTyping(true);
+
     const userMessage: ChatMessage = {
       id: Date.now(),
       role: "user",
@@ -36,18 +39,28 @@ export default function ChatBot() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
 
     try {
+      const conversationHistory = [...messages, userMessage]
+        .filter((m) => m.role === "user" || m.role === "ai")
+        .map((m) => ({
+          role: m.role === "ai" ? "assistant" : "user",
+          content: m.content,
+        }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ messages: conversationHistory }),
       });
+
       const data = await res.json();
-      if (data.message) {
-        setMessages((prev) => [...prev, { id: Date.now(), role: "ai", content: data.message }]);
+
+      if (data.content && data.content[0]?.text) {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), role: "ai", content: data.content[0].text },
+        ]);
       } else {
         setMessages((prev) => [
           ...prev,
@@ -71,175 +84,85 @@ export default function ChatBot() {
   return (
     <>
       {isOpen && (
-        <div
-          style={{
-            position: "fixed",
-            right: "24px",
-            bottom: "86px",
-            width: "305px",
-            height: "405px",
-            background: "#0C1118",
-            border: "1px solid rgba(255,255,255,0.13)",
-            borderRadius: "14px",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "0 18px 45px rgba(0,0,0,0.45)",
-            zIndex: 1200,
-          }}
-        >
-          <div
-            style={{
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              padding: "12px 14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  width: "9px",
-                  height: "9px",
-                  borderRadius: "999px",
-                  background: "#18C97A",
-                  boxShadow: "0 0 10px rgba(24, 201, 122, 0.75)",
-                }}
-              />
-              <span style={{ color: "#EEF2FF", fontWeight: 700, fontSize: "14px" }}>GrowthOS AI</span>
+        <div style={{
+          position: "fixed", bottom: "80px", right: "24px",
+          width: "320px", height: "420px",
+          background: "#0C1118", border: "1px solid rgba(255,255,255,0.13)",
+          borderRadius: "14px", display: "flex", flexDirection: "column",
+          overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", zIndex: 999
+        }}>
+          <div style={{
+            padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+            display: "flex", alignItems: "center", gap: "9px", background: "#111820"
+          }}>
+            <div style={{
+              width: "30px", height: "30px", borderRadius: "50%",
+              background: "linear-gradient(135deg,#18C97A,#4A90D9)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px"
+            }}>🤖</div>
+            <div>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "#EEF2FF" }}>GrowthOS AI</div>
+              <div style={{ fontSize: "9.5px", color: "#18C97A" }}>● Online · reads your live data</div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{
-                border: "none",
-                background: "transparent",
-                color: "#7A8AA8",
-                cursor: "pointer",
-                fontSize: "16px",
-                lineHeight: 1,
-              }}
-            >
-              ×
-            </button>
+            <div onClick={() => setIsOpen(false)} style={{
+              cursor: "pointer", color: "rgba(255,255,255,0.3)",
+              marginLeft: "auto", fontSize: "14px"
+            }}>✕</div>
           </div>
 
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "12px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                style={{
-                  alignSelf: message.role === "user" ? "flex-end" : "flex-start",
-                  maxWidth: "86%",
-                  borderRadius: "10px",
-                  padding: "9px 10px",
-                  fontSize: "13px",
-                  lineHeight: 1.45,
-                  color: message.role === "user" ? "#18C97A" : "#EEF2FF",
-                  background:
-                    message.role === "user"
-                      ? "rgba(24,201,122,0.12)"
-                      : "#111820",
-                }}
-              >
-                {message.content}
+          <div style={{ flex: 1, overflowY: "auto", padding: "11px", display: "flex", flexDirection: "column", gap: "7px" }}>
+            {messages.map((m) => (
+              <div key={m.id} style={{
+                maxWidth: "87%", padding: "8px 11px", borderRadius: "11px",
+                fontSize: "11.5px", lineHeight: 1.55,
+                alignSelf: m.role === "ai" ? "flex-start" : "flex-end",
+                background: m.role === "ai" ? "#111820" : "rgba(24,201,122,0.12)",
+                border: m.role === "ai" ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(24,201,122,0.2)",
+                color: m.role === "ai" ? "#EEF2FF" : "#18C97A",
+              }}>
+                {m.content}
               </div>
             ))}
-
             {isTyping && (
-              <div
-                style={{
-                  alignSelf: "flex-start",
-                  background: "#111820",
-                  color: "#7A8AA8",
-                  borderRadius: "10px",
-                  padding: "9px 10px",
-                  fontSize: "13px",
-                }}
-              >
-                GrowthOS AI is typing...
+              <div style={{
+                alignSelf: "flex-start", padding: "8px 11px", borderRadius: "11px",
+                fontSize: "11.5px", background: "#111820",
+                border: "1px solid rgba(255,255,255,0.07)", color: "rgba(238,242,255,0.4)"
+              }}>
+                Thinking...
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          <div
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.08)",
-              padding: "10px",
-              display: "flex",
-              gap: "8px",
-            }}
-          >
+          <div style={{ padding: "8px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", gap: "5px" }}>
             <input
               value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  void sendMessage();
-                }
-              }}
-              placeholder="Ask GrowthOS AI..."
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Ask about your data..."
               style={{
-                flex: 1,
-                background: "#111820",
-                border: "1px solid rgba(255,255,255,0.11)",
-                borderRadius: "9px",
-                color: "#EEF2FF",
-                fontSize: "13px",
-                padding: "9px 10px",
-                outline: "none",
+                flex: 1, background: "#111820", border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: "7px", padding: "7px 10px", fontSize: "11.5px",
+                color: "#EEF2FF", outline: "none", fontFamily: "inherit"
               }}
             />
-            <button
-              onClick={() => void sendMessage()}
-              disabled={!input.trim() || isTyping}
-              style={{
-                border: "none",
-                borderRadius: "9px",
-                padding: "0 12px",
-                background: !input.trim() || isTyping ? "rgba(24,201,122,0.4)" : "#18C97A",
-                color: "#07110D",
-                fontWeight: 700,
-                fontSize: "12px",
-                cursor: !input.trim() || isTyping ? "not-allowed" : "pointer",
-              }}
-            >
-              Send
-            </button>
+            <button onClick={sendMessage} style={{
+              width: "32px", height: "32px", borderRadius: "7px",
+              background: "#18C97A", border: "none", cursor: "pointer",
+              fontSize: "13px", color: "#000", fontWeight: 700
+            }}>→</button>
           </div>
         </div>
       )}
 
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        style={{
-          position: "fixed",
-          right: "24px",
-          bottom: "24px",
-          width: "56px",
-          height: "56px",
-          borderRadius: "999px",
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: "#18C97A",
-          color: "#07110D",
-          fontSize: "22px",
-          fontWeight: 700,
-          cursor: "pointer",
-          boxShadow: "0 12px 30px rgba(24, 201, 122, 0.35)",
-          zIndex: 1200,
-        }}
-        aria-label="Open GrowthOS AI chat"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} style={{
+        position: "fixed", bottom: "24px", right: "24px",
+        width: "50px", height: "50px", borderRadius: "50%",
+        background: "#18C97A", border: "none", cursor: "pointer",
+        fontSize: "20px", boxShadow: "0 4px 20px rgba(24,201,122,0.35)",
+        zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center"
+      }}>
         💬
       </button>
     </>
