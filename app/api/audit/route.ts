@@ -1,87 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { restaurantData } = body;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  
+  if (!apiKey) {
+    return NextResponse.json({ success: false, error: 'API key missing' });
+  }
 
-    if (!restaurantData) {
-      return NextResponse.json({ success: false, error: 'No data provided' }, { status: 400 });
-    }
+  const body = await req.json();
+  const { restaurantData } = body;
 
-    const systemPrompt = `You are GrowthOS AI, an expert restaurant growth analyst with deep knowledge of Zomato and Swiggy metrics. You think exactly like a senior Key Accounts Manager who has managed 150+ restaurants in Delhi.
+  if (!restaurantData) {
+    return NextResponse.json({ success: false, error: 'No data provided' });
+  }
 
-Your benchmarks:
-- Restaurant Card CTR: Below 2% is bad, above 4% is strong
-- Menu Conversion Rate (Orders divided by Page Opens x 100): Below 10% is bad, 15-20% is good
-- Cancellation Rate: Above 1% is bad, 0% is ideal
-- Returning User %: Below 15% means poor food or service, 30-40% is healthy
-- ATV: Should be 20-30% higher than cheapest main course
-- Recent Rating: Below 3.8 is critical, above 4.2 is strong
+  const prompt = `You are GrowthOS AI, an expert restaurant growth analyst. Analyse this restaurant data and return ONLY a JSON object with no extra text.
 
-GMV Formula: CTR gets them in the door. Conversion gets the order. ATV makes the order valuable. Low Cancellations keeps the platform happy. Ratings ensures they come back.
-
-You MUST respond with ONLY a valid JSON object. No markdown. No backticks. No extra text. Just raw JSON.
-
-Use this exact structure:
-{"overallScore":75,"summary":"Your summary here","leaks":[{"severity":"critical","metric":"Metric name","current":"current value","benchmark":"benchmark value","impact":"impact estimate","problem":"what is wrong","cause":"why it is happening","fix":"exact fix to apply"}],"topWins":["win 1","win 2","win 3"],"weeklyPriority":"most important action this week"}`;
-
-    const conversionRate = (parseFloat(restaurantData.orders) / parseFloat(restaurantData.pageOpens) * 100).toFixed(1);
-
-    const userMessage = `Analyse this restaurant and find all revenue leaks:
+Benchmarks you know:
+- CTR: below 2% bad, above 4% good
+- Menu Conversion (orders/page opens x 100): below 10% bad, 15-20% good  
+- Cancellation rate: above 1% bad, 0% ideal
+- Returning users: below 15% bad, 30-40% good
+- Rating: below 3.8 critical, above 4.2 strong
 
 Restaurant: ${restaurantData.restaurantName}
 Platform: ${restaurantData.platform}
 Period: ${restaurantData.period}
+Impressions: ${restaurantData.impressions}
+CTR: ${restaurantData.ctr}%
+Page Opens: ${restaurantData.pageOpens}
+Orders: ${restaurantData.orders}
+Menu Conversion: ${(Number(restaurantData.orders) / Number(restaurantData.pageOpens) * 100).toFixed(1)}%
+GMV: Rs ${restaurantData.gmv}
+ATV: Rs ${restaurantData.atv}
+Cancellation Rate: ${restaurantData.cancellationRate}%
+Rating: ${restaurantData.rating}
+New Users: ${restaurantData.newUserPercent}%
+Returning Users: ${restaurantData.returningUserPercent}%
 
-METRICS:
-- Impressions: ${restaurantData.impressions}
-- CTR: ${restaurantData.ctr}%
-- Page Opens: ${restaurantData.pageOpens}
-- Orders: ${restaurantData.orders}
-- Menu Conversion Rate: ${conversionRate}%
-- GMV: Rs ${restaurantData.gmv}
-- ATV: Rs ${restaurantData.atv}
-- Cancellation Rate: ${restaurantData.cancellationRate}%
-- Rating: ${restaurantData.rating}
-- New Users: ${restaurantData.newUserPercent}%
-- Returning Users: ${restaurantData.returningUserPercent}%
+Return this exact JSON structure with real analysis:
+{"overallScore":75,"summary":"2 sentence summary","leaks":[{"severity":"critical","metric":"name","current":"value","benchmark":"target","impact":"Rs estimate","problem":"what is wrong","cause":"why","fix":"exact action"}],"topWins":["win1","win2","win3"],"weeklyPriority":"top action"}`;
 
-Return ONLY valid JSON with no extra text.`;
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
-      } as Record<string, string>,
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    });
+  const data = await response.json();
 
-    const data = await response.json();
+  if (!data.content?.[0]?.text) {
+    return NextResponse.json({ success: false, error: 'No AI response', raw: data });
+  }
 
-    if (!data.content || !data.content[0]?.text) {
-      return NextResponse.json({ success: false, error: 'No AI response', details: data });
-    }
-
-    const rawText = data.content[0].text.trim();
-
-    let auditResult;
-    try {
-      auditResult = JSON.parse(rawText);
-    } catch {
-      return NextResponse.json({ success: false, error: 'Could not parse AI response', raw: rawText });
-    }
-
-    return NextResponse.json({ success: true, audit: auditResult });
-
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Server error', details: String(error) });
+  try {
+    const audit = JSON.parse(data.content[0].text.trim());
+    return NextResponse.json({ success: true, audit });
+  } catch {
+    return NextResponse.json({ success: false, error: 'Parse failed', raw: data.content[0].text });
   }
 }
