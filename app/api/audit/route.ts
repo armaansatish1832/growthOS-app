@@ -1,101 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { restaurantData } = await req.json();
+  try {
+    const body = await req.json();
+    const { restaurantData } = body;
 
-  if (!restaurantData) {
-    return NextResponse.json({ error: 'No data provided' }, { status: 400 });
-  }
+    if (!restaurantData) {
+      return NextResponse.json({ success: false, error: 'No data provided' }, { status: 400 });
+    }
 
-  const systemPrompt = `You are GrowthOS AI — an expert restaurant growth analyst with deep knowledge of Zomato and Swiggy metrics. You think and analyse exactly like a senior Key Accounts Manager who has managed 150+ restaurants in Delhi.
+    const systemPrompt = `You are GrowthOS AI — an expert restaurant growth analyst with deep knowledge of Zomato and Swiggy metrics. You think exactly like a senior Key Accounts Manager who has managed 150+ restaurants in Delhi.
 
-Your job is to analyse a restaurant's performance data and produce a clear, actionable audit report.
-
-You know these benchmarks from experience:
+Your benchmarks:
 - Restaurant Card CTR: Below 2% is bad, above 4% is strong
-- Menu Conversion Rate (Orders/Page Opens): Below 10% is bad, 15-20% is good
+- Menu Conversion Rate (Orders divided by Page Opens x 100): Below 10% is bad, 15-20% is good
 - Cancellation Rate: Above 1% is bad, 0% is ideal
-- Returning User %: Below 15% means poor food/service, 30-40% is healthy
+- Returning User %: Below 15% means poor food or service, 30-40% is healthy
 - ATV: Should be 20-30% higher than cheapest main course
 - Recent Rating: Below 3.8 is critical, above 4.2 is strong
 
-You follow this GMV formula:
-CTR gets them in the door → Conversion gets the order → ATV makes the order valuable → Low Cancellations keeps the platform happy → Ratings ensures they come back
+GMV Formula: CTR gets them in the door. Conversion gets the order. ATV makes the order valuable. Low Cancellations keeps the platform happy. Ratings ensures they come back.
 
-For every leak you find, you must provide:
-1. What the problem is
-2. Why it is happening
-3. The exact fix — specific, actionable, copy-paste ready
+For every leak provide: what the problem is, why it is happening, and the exact fix.
 
-Format your response as a JSON object with this structure:
-{
-  "overallScore": <number 0-100>,
-  "summary": "<2 sentence overall assessment>",
-  "leaks": [
-    {
-      "severity": "critical" | "warning" | "opportunity",
-      "metric": "<metric name>",
-      "current": "<current value>",
-      "benchmark": "<what it should be>",
-      "impact": "<estimated GMV impact>",
-      "problem": "<what is wrong>",
-      "cause": "<why it is happening>",
-      "fix": "<exact actionable fix>"
-    }
-  ],
-  "topWins": ["<quick win 1>", "<quick win 2>", "<quick win 3>"],
-  "weeklyPriority": "<the single most important thing to do this week>"
-}
+You MUST respond with ONLY a valid JSON object. No markdown, no backticks, no extra text. Just the raw JSON.
 
-Only return valid JSON. No extra text.`;
+JSON structure:
+{"overallScore":75,"summary":"2 sentence summary here","leaks":[{"severity":"critical","metric":"Restaurant Card CTR","current":"1.8%","benchmark":"Above 4%","impact":"Estimated 40% more orders if fixed","problem":"CTR is below benchmark","cause":"Cover photo is weak","fix":"Upload a new high contrast food photo as cover image"}],"topWins":["Quick win 1","Quick win 2","Quick win 3"],"weeklyPriority":"The single most important thing to do this week"}`;
 
-  const userMessage = `Please analyse this restaurant's performance data and identify all revenue leaks:
+    const userMessage = `Analyse this restaurant data and find all revenue leaks:
 
 Restaurant: ${restaurantData.restaurantName}
 Platform: ${restaurantData.platform}
 Period: ${restaurantData.period}
 
-KEY METRICS:
-- Restaurant Card Impressions: ${restaurantData.impressions}
-- Restaurant Card CTR: ${restaurantData.ctr}%
-- Total Page Opens: ${restaurantData.pageOpens}
-- Total Orders/Transactions: ${restaurantData.orders}
-- GMV: ₹${restaurantData.gmv}
-- Average Transaction Value (ATV): ₹${restaurantData.atv}
+METRICS:
+- Impressions: ${restaurantData.impressions}
+- CTR: ${restaurantData.ctr}%
+- Page Opens: ${restaurantData.pageOpens}
+- Orders: ${restaurantData.orders}
+- GMV: Rs ${restaurantData.gmv}
+- ATV: Rs ${restaurantData.atv}
 - Cancellation Rate: ${restaurantData.cancellationRate}%
-- Current Rating: ${restaurantData.rating}
-- New Users %: ${restaurantData.newUserPercent}%
-- Returning Users %: ${restaurantData.returningUserPercent}%
+- Rating: ${restaurantData.rating}
+- New Users: ${restaurantData.newUserPercent}%
+- Returning Users: ${restaurantData.returningUserPercent}%
+- Menu Conversion Rate: ${(parseFloat(restaurantData.orders) / parseFloat(restaurantData.pageOpens) * 100).toFixed(1)}%
 
-Calculate the Menu Conversion Rate as: ${restaurantData.orders} ÷ ${restaurantData.pageOpens} × 100
+Find all leaks and provide specific fixes. Return ONLY valid JSON.`;
 
-Identify all leaks, compare every metric against benchmarks, and provide specific fixes.`;
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'anthropic-version': '2023-06-01',
+      } as Record<string, string>,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY!,
-      'anthropic-version': '2023-06-01',
-    } as Record<string, string>,
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-  });
+    const data = await response.json();
 
-  const data = await response.json();
-
-  if (data.content && data.content[0]?.text) {
-    try {
-      const auditResult = JSON.parse(data.content[0].text);
-      return NextResponse.json({ success: true, audit: auditResult });
-    } catch {
-      return NextResponse.json({ success: false, error: 'Failed to parse audit results' });
+    if (!data.content || !data.content[0]?.text) {
+      return NextResponse.json({ success: false, error: 'No response from AI', details: data });
     }
-  }
 
-  return NextResponse.json({ success: false, error: 'No response from AI' });
-}
+    const rawText = data.content[0].text.trim();
+
+    let auditResult;
+    try {
+      auditResult = JSON.parse(rawText);
+    } catch {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if
