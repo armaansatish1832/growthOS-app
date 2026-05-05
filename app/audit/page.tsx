@@ -110,9 +110,10 @@ Return this exact JSON structure:
       const data = await res.json();
 
       if (data.content && data.content[0]?.text) {
-        const text = data.content[0].text.trim();
-        const audit = JSON.parse(text);
-        setAudit(audit);
+        let text = data.content[0].text.trim();
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const auditResult = JSON.parse(text);
+        setAudit(auditResult);
         setStep("result");
       } else {
         setError("Something went wrong. Please try again.");
@@ -275,7 +276,6 @@ Return this exact JSON structure:
             <label style={labelStyle}>Period</label>
             <input name="period" value={formData.period} onChange={handleChange} placeholder="e.g. 1-7 May 2026" style={inputStyle} />
           </div>
-
           <div style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(238,242,255,0.3)", textTransform: "uppercase" as const, letterSpacing: "0.1em", marginBottom: "14px" }}>Your Metrics</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             {fields.map((field) => (
@@ -285,7 +285,6 @@ Return this exact JSON structure:
               </div>
             ))}
           </div>
-
           <button onClick={handleSubmit} style={{ width: "100%", padding: "13px", background: "#18C97A", border: "none", borderRadius: "10px", color: "#000", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginTop: "20px" }}>
             Run AI Audit
           </button>
