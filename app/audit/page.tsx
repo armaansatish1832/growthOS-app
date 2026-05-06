@@ -159,10 +159,10 @@ Cancellation Rate: ${manualData.cancellationRate}%
 Rating: ${manualData.rating}
 New Users: ${manualData.newUserPercent}%
 Returning Users: ${manualData.returningUserPercent}%
+Also search Zomato and Swiggy for "${formData.cuisine} restaurants in ${formData.location}" and find the top 5 competitors. For each competitor analyse: their rating, number of ratings, price range, delivery time, current offers/discounts, photo quality, and what they do better than this restaurant. Also compare platform performance if multiple platforms are mentioned.
 
-Return this exact JSON:
-{"overallScore":75,"summary":"2 sentence summary","leaks":[{"severity":"critical","metric":"name","current":"value","benchmark":"target","impact":"Rs estimate","problem":"issue","cause":"reason","fix":"exact action"}],"topWins":["win1","win2","win3"],"weeklyPriority":"top action"}`;
-      }
+Return this exact JSON with no extra text:
+{"overallScore":75,"summary":"2 sentence summary","leaks":[{"severity":"critical","metric":"name","current":"value","benchmark":"target","impact":"money amount","problem":"what is wrong","fix":"exact action to take"}],"topWins":["win1","win2"],"weeklyPriority":"top action this week","competitors":[{"name":"competitor name","rating":"4.2","totalRatings":"500+","priceRange":"₹200-400","deliveryTime":"30 mins","offers":"20% off on first order","photoQuality":"high/medium/low","ranking":"#1 in area","insight":"one key thing they do better"}],"platformComparison":{"verdict":"which platform is better and why","platforms":[{"name":"Zomato","score":85,"gmv":"estimated","roas":"4.1x","commission":"24%","recommendation":"increase/decrease/maintain budget"}]}}
 
       const res = await fetch("/api/chat", {
         method: "POST",
