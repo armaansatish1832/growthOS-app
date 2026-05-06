@@ -39,7 +39,7 @@ type AuditType = {
   topWins: string[];
   weeklyPriority: string;
   competitors: CompetitorType[];
-  platformComparison: { verdict: string; platforms: PlatformType[] };
+  platformComparison: { verdict: string; platforms: PlatformType[] } | null;
 };
 };
 
