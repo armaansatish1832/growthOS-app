@@ -313,6 +313,43 @@ Return this exact JSON with no extra text:
               ))}
             </div>
           )}
+          {audit.competitors && audit.competitors.length > 0 && (
+  <div style={{ background: "#0C1118", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
+    <div style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(238,242,255,0.3)", textTransform: "uppercase" as const, letterSpacing: "0.1em", marginBottom: "12px" }}>🔍 Competitor Intelligence</div>
+    {audit.competitors.map((comp, i) => (
+      <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "14px", marginBottom: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+          <div style={{ fontSize: "13px", fontWeight: 700, color: "#EEF2FF" }}>{comp.name}</div>
+          <div style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "rgba(24,201,122,0.1)", color: "#18C97A" }}>⭐ {comp.rating} ({comp.totalRatings})</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+          <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.5)" }}>💰 {comp.priceRange}</div>
+          <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.5)" }}>🕐 {comp.deliveryTime}</div>
+          <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.5)" }}>📸 Photos: {comp.photoQuality}</div>
+        </div>
+        {comp.offers && <div style={{ fontSize: "11px", color: "#F5A623", marginBottom: "6px" }}>🏷️ {comp.offers}</div>}
+        <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.4)", background: "rgba(0,0,0,0.2)", borderRadius: "6px", padding: "8px" }}>💡 {comp.insight}</div>
+      </div>
+    ))}
+  </div>
+)}
+
+{audit.platformComparison && (
+  <div style={{ background: "#0C1118", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
+    <div style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(238,242,255,0.3)", textTransform: "uppercase" as const, letterSpacing: "0.1em", marginBottom: "12px" }}>⇌ Platform Comparison</div>
+    <div style={{ fontSize: "12px", color: "#18C97A", marginBottom: "12px", padding: "10px", background: "rgba(24,201,122,0.08)", borderRadius: "8px" }}>{audit.platformComparison.verdict}</div>
+    {audit.platformComparison.platforms?.map((plat, i) => (
+      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", marginBottom: "8px" }}>
+        <div style={{ fontSize: "13px", fontWeight: 700, color: "#EEF2FF" }}>{plat.name}</div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.5)" }}>ROAS: <b style={{ color: "#EEF2FF" }}>{plat.roas}</b></div>
+          <div style={{ fontSize: "11px", color: "rgba(238,242,255,0.5)" }}>Commission: <b style={{ color: "#EEF2FF" }}>{plat.commission}</b></div>
+          <div style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "rgba(24,201,122,0.1)", color: "#18C97A" }}>{plat.recommendation}</div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
           <button onClick={() => { setStep("form"); setAudit(null); setUploadedFile(null); }} style={{ width: "100%", padding: "13px", background: "#18C97A", border: "none", borderRadius: "10px", color: "#000", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
             Run Another Audit
