@@ -141,6 +141,7 @@ export default function Home() {
             />
             <span style={{ fontSize: "22px", fontWeight: 700 }}>GrowthOS</span>
           </div>
+          <a href="/audit" style={{ padding: "8px 16px", background: "var(--accentGreen)", color: "#000", borderRadius: "8px", fontWeight: 700, fontSize: "13px", textDecoration: "none" }}>Run AI Audit →</a>
           <UserButton />
         </header>
 
