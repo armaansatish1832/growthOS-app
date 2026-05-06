@@ -198,7 +198,7 @@ Return this exact JSON with no extra text:
       const data = await res.json();
       if (data.content && data.content[0]?.text) {
         let text = data.content[0].text.trim();
-        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        text = text.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
         setAudit(JSON.parse(text));
         setStep("result");
       } else {
