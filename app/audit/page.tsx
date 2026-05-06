@@ -11,12 +11,36 @@ type LeakType = {
   fix: string;
 };
 
+type CompetitorType = {
+  name: string;
+  rating: string;
+  totalRatings: string;
+  priceRange: string;
+  deliveryTime: string;
+  offers: string;
+  photoQuality: string;
+  ranking: string;
+  insight: string;
+};
+
+type PlatformType = {
+  name: string;
+  score: number;
+  gmv: string;
+  roas: string;
+  commission: string;
+  recommendation: string;
+};
+
 type AuditType = {
   overallScore: number;
   summary: string;
   leaks: LeakType[];
   topWins: string[];
   weeklyPriority: string;
+  competitors: CompetitorType[];
+  platformComparison: { verdict: string; platforms: PlatformType[] };
+};
 };
 
 type FormData = {
