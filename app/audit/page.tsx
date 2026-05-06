@@ -41,7 +41,7 @@ type AuditType = {
   competitors: CompetitorType[];
   platformComparison: { verdict: string; platforms: PlatformType[] } | null;
 };
-};
+
 
 type FormData = {
   restaurantName: string;
