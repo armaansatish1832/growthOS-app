@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     } as Record<string, string>,
     body: JSON.stringify({
       model: 'claude-sonnet-4-5',
-      max_tokens: 1000,
+      max_tokens: 4000,
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
       system: 'You are GrowthOS AI, a helpful assistant for sellers. Help them understand their revenue metrics, find leaks, and grow their business.',
       messages,
     }),
