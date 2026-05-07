@@ -206,6 +206,7 @@ Return this exact JSON with no extra text:
         setError("Something went wrong. Please try again.");
         setStep("form");
       }
+    }
     } catch {
       setError("Something went wrong. Please try again.");
       setStep("form");
