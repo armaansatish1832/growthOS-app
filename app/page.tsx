@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import ChatBot from "@/components/ChatBot";
 
 export default function Home() {
+  const { user } = useUser();
   const [activeNav, setActiveNav] = React.useState("Dashboard");
   const [hoveredNav, setHoveredNav] = React.useState<string | null>(null);
 
@@ -147,7 +148,7 @@ export default function Home() {
 
         <section style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "22px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ fontSize: "30px", fontWeight: 700 }}>Good morning, Armaan 👋</div>
+            <div style={{ fontSize: "30px", fontWeight: 700 }}>Good morning, {user?.firstName || "there"} 👋</div>
             <div style={{ color: "var(--textSecondary)", fontSize: "15px", fontWeight: 500 }}>
               3 revenue leaks detected across your platforms this week
             </div>
