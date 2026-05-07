@@ -187,6 +187,7 @@ Also search Zomato and Swiggy for "${formData.cuisine} restaurants in ${formData
 
 Return this exact JSON with no extra text:
 {"overallScore":75,"summary":"2 sentence summary","leaks":[{"severity":"critical","metric":"name","current":"value","benchmark":"target","impact":"money amount","problem":"what is wrong","fix":"exact action to take"}],"topWins":["win1","win2"],"weeklyPriority":"top action this week","competitors":[{"name":"competitor name","rating":"4.2","totalRatings":"500+","priceRange":"₹200-400","deliveryTime":"30 mins","offers":"20% off on first order","photoQuality":"high/medium/low","ranking":"#1 in area","insight":"one key thing they do better"}],"platformComparison":{"verdict":"which platform is better and why","platforms":[{"name":"Zomato","score":85,"gmv":"estimated","roas":"4.1x","commission":"24%","recommendation":"increase/decrease/maintain budget"}]}}
+`;
 
       const res = await fetch("/api/chat", {
         method: "POST",
